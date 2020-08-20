@@ -1,15 +1,16 @@
 # manylinux1-based image for compiling Spatial Model Editor python wheels
 
-FROM quay.io/pypa/manylinux1_x86_64:2020-03-07-9c5ba95 as builder
+FROM quay.io/pypa/manylinux1_x86_64:2020-08-12-ebd07dd as builder
 MAINTAINER Liam Keegan "liam@keegan.ch"
 
-ARG NPROCS=4
+ARG NPROCS=24
 ARG BUILD_DIR=/opt/smelibs
 ARG TMP_DIR=/opt/tmpwd
 
 RUN yum install -q -y \
-    wget \
-    flex
+    flex \
+    subversion \
+    wget
 
 RUN git clone -b releases/gcc-9.2.0 --depth=1 https://github.com/gcc-mirror/gcc.git \
     && cd gcc \
@@ -29,28 +30,9 @@ RUN mkdir -p $TMP_DIR && cd $TMP_DIR \
     && make install-strip \
     && rm -rf $TMP_DIR
 
-ARG CMAKE_VERSION="v3.13.4"
-RUN export PATH=/opt/gcc9/bin:$PATH \
-    && export LD_LIBRARY_PATH=/opt/gcc9/lib64:/opt/gcc9/lib:$LD_LIBRARY_PATH \
-    && echo $PATH \
-    && gcc --version \
-    && g++ --version \
-    && mkdir -p $TMP_DIR && cd $TMP_DIR \
-    && git clone \
-        -b $CMAKE_VERSION \
-        --depth=1 \
-        https://github.com/Kitware/CMake.git \
-    && cd CMake \
-    && ./bootstrap \
-        --parallel=$NPROCS \
-        --prefix=/opt/cmake \
-        -- \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_USE_OPENSSL=OFF \
-    && make -j$NPROCS \
-    && make install \
-    && ln -fs /opt/cmake/bin/cmake /usr/bin/cmake \
-    && rm -rf $TMP_DIR
+RUN /opt/python/cp38-cp38/bin/pip install \
+    cmake==3.13.2.post1 \
+    &&  ln -fs /opt/python/cp38-cp38/bin/cmake /usr/bin/cmake
 
 ARG GMP_VERSION="6.1.2"
 RUN export PATH=/opt/gcc9/bin:$PATH \
@@ -148,7 +130,7 @@ RUN export PATH=/opt/gcc9/bin:$PATH \
     && make install \
     && rm -rf $TMP_DIR
 
-ARG LLVM_VERSION="9.0.1"
+ARG LLVM_VERSION="10.0.1"
 RUN export PATH=/opt/gcc9/bin:$PATH \
     && export LD_LIBRARY_PATH=/opt/gcc9/lib64:/opt/gcc9/lib:$LD_LIBRARY_PATH \
     && export CC=/opt/gcc9/bin/gcc \
@@ -191,14 +173,12 @@ RUN export PATH=/opt/gcc9/bin:$PATH \
         -DLLVM_ENABLE_TERMINFO=OFF \
         -DLLVM_ENABLE_LIBXML2=OFF \
         -DLLVM_ENABLE_WARNINGS=OFF \
-        -DLLVM_POLLY_BUILD=OFF \
-        -DLLVM_POLLY_LINK_INTO_TOOLS=OFF \
         .. \
     && make -j$NPROCS \
     && make install \
     && rm -rf $TMP_DIR
 
-ARG TBB_VERSION="v2020.1"
+ARG TBB_VERSION="v2020.3"
 RUN export PATH=/opt/gcc9/bin:$PATH \
     && export LD_LIBRARY_PATH=/opt/gcc9/lib64:/opt/gcc9/lib:$LD_LIBRARY_PATH \
     && export CC=/opt/gcc9/bin/gcc \
@@ -253,7 +233,7 @@ RUN export PATH=/opt/gcc9/bin:$PATH \
     && make install \
     && rm -rf $TMP_DIR
 
-ARG QT5_VERSION="v5.14.1"
+ARG QT5_VERSION="v5.15.0"
 RUN mkdir -p $TMP_DIR && cd $TMP_DIR \
     && git clone \
         https://code.qt.io/qt/qt5.git \
@@ -287,6 +267,7 @@ RUN export PATH=/opt/gcc9/bin:$PATH \
         -qt-libpng \
         -qt-pcre \
         -qt-harfbuzz \
+        -no-zstd \
         -no-compile-examples \
         -nomake tests \
         -nomake examples \
@@ -296,11 +277,12 @@ RUN export PATH=/opt/gcc9/bin:$PATH \
         -no-icu \
         -no-feature-concurrent \
         -no-feature-xml \
+        -feature-testlib \
     && make -j$NPROCS \
     && make install \
     && rm -rf $TMP_DIR
 
-ARG FMT_VERSION="6.1.2"
+ARG FMT_VERSION="7.0.3"
 RUN export PATH=/opt/gcc9/bin:$PATH \
     && export LD_LIBRARY_PATH=/opt/gcc9/lib64:/opt/gcc9/lib:$LD_LIBRARY_PATH \
     && export CC=/opt/gcc9/bin/gcc \
@@ -330,7 +312,7 @@ RUN export PATH=/opt/gcc9/bin:$PATH \
     && make install \
     && rm -rf $TMP_DIR
 
-ARG SPDLOG_VERSION="v1.5.0"
+ARG SPDLOG_VERSION="v1.7.0"
 RUN export PATH=/opt/gcc9/bin:$PATH \
     && export LD_LIBRARY_PATH=/opt/gcc9/lib64:/opt/gcc9/lib:$LD_LIBRARY_PATH \
     && export CC=/opt/gcc9/bin/gcc \
@@ -393,13 +375,14 @@ RUN export PATH=/opt/gcc9/bin:$PATH \
         -DWITH_LLVM=ON \
         -DWITH_COTIRE=OFF \
         -DWITH_SYMENGINE_THREAD_SAFE=OFF \
+        -DWITH_CPP14=ON \
         .. \
     && make -j$NPROCS \
     && make test \
     && make install \
     && rm -rf $TMP_DIR
 
-ARG DUNE_COPASI_VERSION="v0.2.0"
+ARG DUNE_COPASI_VERSION="allow_no_vtk_output"
 RUN export PATH=/opt/gcc9/bin:$PATH \
     && export LD_LIBRARY_PATH=/opt/gcc9/lib64:/opt/gcc9/lib:$LD_LIBRARY_PATH \
     && export CC=/opt/gcc9/bin/gcc \
@@ -437,10 +420,7 @@ RUN export PATH=/opt/gcc9/bin:$PATH \
     && $DUNECONTROL make install \
     && rm -rf $TMP_DIR
 
-RUN yum install -q -y \
-    subversion
-
-ARG LIBSBML_REVISION="26285"
+ARG LIBSBML_VERSION="development"
 RUN export PATH=/opt/gcc9/bin:$PATH \
     && export LD_LIBRARY_PATH=/opt/gcc9/lib64:/opt/gcc9/lib:$LD_LIBRARY_PATH \
     && export CC=/opt/gcc9/bin/gcc \
@@ -449,10 +429,11 @@ RUN export PATH=/opt/gcc9/bin:$PATH \
     && gcc --version \
     && g++ --version \
     && mkdir -p $TMP_DIR/build && cd $TMP_DIR/build \
-    && svn \
-        -q \
-        co svn://svn.code.sf.net/p/sbml/code/branches/libsbml-experimental@$LIBSBML_REVISION \
-    && cd libsbml-experimental \
+    && git clone \
+        -b $LIBSBML_VERSION \
+        --depth=1 \
+        https://github.com/sbmlteam/libsbml.git \
+    && cd libsbml \
     && mkdir build \
     && cd build \
     && cmake \
@@ -476,19 +457,167 @@ RUN export PATH=/opt/gcc9/bin:$PATH \
     && make install \
     && rm -rf $TMP_DIR
 
-FROM quay.io/pypa/manylinux1_x86_64:2020-03-07-9c5ba95
+ARG OPENCV_VERSION="4.4.0"
+RUN mkdir -p $TMP_DIR/build && cd $TMP_DIR/build \
+    && git clone \
+        -b $OPENCV_VERSION \
+        --depth=1 \
+        https://github.com/opencv/opencv.git
+
+# patch for "‘CPU_COUNT’ was not declared in this scope" compilation error
+RUN sed -i "s/CPU_COUNT(\&cpu_set)/1/g" $TMP_DIR/build/opencv/modules/core/src/parallel.cpp \
+    && cat $TMP_DIR/build/opencv/modules/core/src/parallel.cpp
+
+RUN export PATH=/opt/gcc9/bin:$PATH \
+    && export LD_LIBRARY_PATH=/opt/gcc9/lib64:/opt/gcc9/lib:$LD_LIBRARY_PATH \
+    && export CC=/opt/gcc9/bin/gcc \
+    && export CXX=/opt/gcc9/bin/g++ \
+    && echo $PATH \
+    && gcc --version \
+    && g++ --version \
+    && cd $TMP_DIR/build/opencv \
+    && mkdir build \
+    && cd build \
+    && cmake \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DCMAKE_C_FLAGS="-fpic -fvisibility=hidden" \
+        -DCMAKE_CXX_FLAGS="-fpic -fvisibility=hidden" \
+        -DCMAKE_INSTALL_PREFIX=$BUILD_DIR \
+        -DCPU_DISPATCH="SSE4_1;SSE4_2;AVX;FP16;AVX2" \
+        -DBUILD_opencv_apps=OFF \
+        -DBUILD_opencv_calib3d=OFF \
+        -DBUILD_opencv_core=ON \
+        -DBUILD_opencv_dnn=OFF \
+        -DBUILD_opencv_features2d=OFF \
+        -DBUILD_opencv_flann=OFF \
+        -DBUILD_opencv_gapi=OFF \
+        -DBUILD_opencv_highgui=OFF \
+        -DBUILD_opencv_imgcodecs=OFF \
+        -DBUILD_opencv_imgproc=ON \
+        -DBUILD_opencv_java_bindings_generator=OFF \
+        -DBUILD_opencv_js=OFF \
+        -DBUILD_opencv_ml=OFF \
+        -DBUILD_opencv_objdetect=OFF \
+        -DBUILD_opencv_photo=OFF \
+        -DBUILD_opencv_python_bindings_generator=OFF \
+        -DBUILD_opencv_python_tests=OFF \
+        -DBUILD_opencv_stitching=OFF \
+        -DBUILD_opencv_ts=OFF \
+        -DBUILD_opencv_video=OFF \
+        -DBUILD_opencv_videoio=OFF \
+        -DBUILD_opencv_world=OFF \
+        -DBUILD_CUDA_STUBS:BOOL=OFF \
+        -DBUILD_DOCS:BOOL=OFF \
+        -DBUILD_EXAMPLES:BOOL=OFF \
+        -DBUILD_FAT_JAVA_LIB:BOOL=OFF \
+        -DBUILD_IPP_IW:BOOL=OFF \
+        -DBUILD_ITT:BOOL=OFF \
+        -DBUILD_JASPER:BOOL=OFF \
+        -DBUILD_JAVA:BOOL=OFF \
+        -DBUILD_JPEG:BOOL=OFF \
+        -DBUILD_OPENEXR:BOOL=OFF \
+        -DBUILD_PACKAGE:BOOL=OFF \
+        -DBUILD_PERF_TESTS:BOOL=OFF \
+        -DBUILD_PNG:BOOL=OFF \
+        -DBUILD_PROTOBUF:BOOL=OFF \
+        -DBUILD_SHARED_LIBS:BOOL=OFF \
+        -DBUILD_TBB:BOOL=OFF \
+        -DBUILD_TESTS:BOOL=OFF \
+        -DBUILD_TIFF:BOOL=OFF \
+        -DBUILD_USE_SYMLINKS:BOOL=OFF \
+        -DBUILD_WEBP:BOOL=OFF \
+        -DBUILD_WITH_DEBUG_INFO:BOOL=OFF \
+        -DBUILD_WITH_DYNAMIC_IPP:BOOL=OFF \
+        -DBUILD_ZLIB:BOOL=ON \
+        -DWITH_1394:BOOL=OFF \
+        -DWITH_ADE:BOOL=OFF \
+        -DWITH_ARAVIS:BOOL=OFF \
+        -DWITH_CLP:BOOL=OFF \
+        -DWITH_CUDA:BOOL=OFF \
+        -DWITH_EIGEN:BOOL=OFF \
+        -DWITH_FFMPEG:BOOL=OFF \
+        -DWITH_FREETYPE:BOOL=OFF \
+        -DWITH_GDAL:BOOL=OFF \
+        -DWITH_GDCM:BOOL=OFF \
+        -DWITH_GPHOTO2:BOOL=OFF \
+        -DWITH_GSTREAMER:BOOL=OFF \
+        -DWITH_GTK:BOOL=OFF \
+        -DWITH_GTK_2_X:BOOL=OFF \
+        -DWITH_HALIDE:BOOL=OFF \
+        -DWITH_HPX:BOOL=OFF \
+        -DWITH_IMGCODEC_HDR:BOOL=OFF \
+        -DWITH_IMGCODEC_PFM:BOOL=OFF \
+        -DWITH_IMGCODEC_PXM:BOOL=OFF \
+        -DWITH_IMGCODEC_SUNRASTER:BOOL=OFF \
+        -DWITH_INF_ENGINE:BOOL=OFF \
+        -DWITH_IPP:BOOL=OFF \
+        -DWITH_ITT:BOOL=OFF \
+        -DWITH_JASPER:BOOL=OFF \
+        -DWITH_JPEG:BOOL=OFF \
+        -DWITH_LAPACK:BOOL=OFF \
+        -DWITH_LIBREALSENSE:BOOL=OFF \
+        -DWITH_MFX:BOOL=OFF \
+        -DWITH_NGRAPH:BOOL=OFF \
+        -DWITH_OPENCL:BOOL=OFF \
+        -DWITH_OPENCLAMDBLAS:BOOL=OFF \
+        -DWITH_OPENCLAMDFFT:BOOL=OFF \
+        -DWITH_OPENCL_SVM:BOOL=OFF \
+        -DWITH_OPENEXR:BOOL=OFF \
+        -DWITH_OPENGL:BOOL=OFF \
+        -DWITH_OPENJPEG:BOOL=OFF \
+        -DWITH_OPENMP:BOOL=OFF \
+        -DWITH_OPENNI:BOOL=OFF \
+        -DWITH_OPENNI2:BOOL=OFF \
+        -DWITH_OPENVX:BOOL=OFF \
+        -DWITH_PLAIDML:BOOL=OFF \
+        -DWITH_PNG:BOOL=OFF \
+        -DWITH_PROTOBUF:BOOL=OFF \
+        -DWITH_PTHREADS_PF:BOOL=OFF \
+        -DWITH_PVAPI:BOOL=OFF \
+        -DWITH_QT:BOOL=OFF \
+        -DWITH_QUIRC:BOOL=OFF \
+        -DWITH_TBB:BOOL=OFF \
+        -DWITH_TIFF:BOOL=OFF \
+        -DWITH_V4L:BOOL=OFF \
+        -DWITH_VA:BOOL=OFF \
+        -DWITH_VA_INTEL:BOOL=OFF \
+        -DWITH_VTK:BOOL=OFF \
+        -DWITH_VULKAN:BOOL=OFF \
+        -DWITH_WEBP:BOOL=OFF \
+        -DWITH_XIMEA:BOOL=OFF \
+        -DWITH_XINE:BOOL=OFF \
+        .. \
+    && make -j$NPROCS \
+    && make install \
+    && rm -rf $TMP_DIR
+
+FROM quay.io/pypa/manylinux1_x86_64:2020-08-12-ebd07dd
 MAINTAINER Liam Keegan "liam@keegan.ch"
 
 ARG BUILD_DIR=/opt/smelibs
 
-COPY --from=builder $BUILD_DIR $BUILD_DIR
+# GCC 9
 COPY --from=builder /opt/gcc9 /opt/gcc9
-
-RUN /opt/python/cp38-cp38/bin/pip install \
-    cmake==3.13.2.post1 \
-    &&  ln -fs /opt/python/cp38-cp38/bin/cmake /usr/bin/cmake
-
 ENV CMAKE_PREFIX_PATH="$BUILD_DIR;$BUILD_DIR/lib64/cmake"
 ENV CC=/opt/gcc9/bin/gcc
 ENV CXX=/opt/gcc9/bin/g++
 ENV LD_LIBRARY_PATH=/opt/gcc9/lib64:/opt/gcc9/lib:$LD_LIBRARY_PATH
+
+# SME static libs
+COPY --from=builder $BUILD_DIR $BUILD_DIR
+
+# Remove Python 3.9 - still in beta
+RUN rm -rf /opt/python/cp39-cp39
+
+# Install cmake and ccache
+RUN /opt/python/cp38-cp38/bin/pip install \
+    cmake==3.13.2.post1 \
+    && ln -fs /opt/python/cp38-cp38/bin/cmake /usr/bin/cmake \
+    && yum install -q -y \
+        ccache
+
+# Setup ccache
+ENV CCACHE_BASEDIR=/tmp
+ENV CCACHE_DIR=/tmp/ccache
+ENV CMAKE_CXX_COMPILER_LAUNCHER=ccache

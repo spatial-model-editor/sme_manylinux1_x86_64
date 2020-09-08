@@ -1,6 +1,6 @@
 # manylinux1-based image for compiling Spatial Model Editor python wheels
 
-FROM quay.io/pypa/manylinux1_x86_64:2020-08-12-ebd07dd as builder
+FROM quay.io/pypa/manylinux1_x86_64:2020-08-20-a535ba4 as builder
 MAINTAINER Liam Keegan "liam@keegan.ch"
 
 ARG NPROCS=24
@@ -282,180 +282,6 @@ RUN export PATH=/opt/gcc9/bin:$PATH \
     && make install \
     && rm -rf $TMP_DIR
 
-ARG FMT_VERSION="7.0.3"
-RUN export PATH=/opt/gcc9/bin:$PATH \
-    && export LD_LIBRARY_PATH=/opt/gcc9/lib64:/opt/gcc9/lib:$LD_LIBRARY_PATH \
-    && export CC=/opt/gcc9/bin/gcc \
-    && export CXX=/opt/gcc9/bin/g++ \
-    && echo $PATH \
-    && gcc --version \
-    && g++ --version \
-    && mkdir -p $TMP_DIR/build && cd $TMP_DIR/build \
-    && git clone \
-        -b $FMT_VERSION \
-        --depth=1 \
-        https://github.com/fmtlib/fmt.git \
-    && cd fmt \
-    && mkdir build \
-    && cd build \
-    && cmake \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DBUILD_SHARED_LIBS=OFF \
-        -DCMAKE_C_FLAGS="-fpic -fvisibility=hidden" \
-        -DCMAKE_CXX_FLAGS="-fpic -fvisibility=hidden" \
-        -DCMAKE_INSTALL_PREFIX=$BUILD_DIR \
-        -DCMAKE_CXX_STANDARD=17 \
-        -DFMT_DOC=OFF \
-        .. \
-    && make -j$NPROCS \
-    && make test \
-    && make install \
-    && rm -rf $TMP_DIR
-
-ARG SPDLOG_VERSION="v1.7.0"
-RUN export PATH=/opt/gcc9/bin:$PATH \
-    && export LD_LIBRARY_PATH=/opt/gcc9/lib64:/opt/gcc9/lib:$LD_LIBRARY_PATH \
-    && export CC=/opt/gcc9/bin/gcc \
-    && export CXX=/opt/gcc9/bin/g++ \
-    && echo $PATH \
-    && gcc --version \
-    && g++ --version \
-    && mkdir -p $TMP_DIR/build && cd $TMP_DIR/build \
-    && git clone \
-        -b $SPDLOG_VERSION \
-        --depth=1 \
-        https://github.com/gabime/spdlog.git \
-    && cd spdlog \
-    && mkdir cmake-build \
-    && cd cmake-build \
-    && cmake \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DBUILD_SHARED_LIBS=OFF \
-        -DCMAKE_C_FLAGS="-fpic -fvisibility=hidden" \
-        -DCMAKE_CXX_FLAGS="-fpic -fvisibility=hidden" \
-        -DCMAKE_INSTALL_PREFIX=$BUILD_DIR \
-        -DSPDLOG_BUILD_TESTS=ON \
-        -DSPDLOG_BUILD_EXAMPLE=OFF \
-        -DSPDLOG_FMT_EXTERNAL=ON \
-        -DSPDLOG_NO_THREAD_ID=ON \
-        -DSPDLOG_NO_ATOMIC_LEVELS=ON \
-        -DCMAKE_PREFIX_PATH=$BUILD_DIR \
-        .. \
-    && make -j$NPROCS \
-    && make test \
-    && make install \
-    && rm -rf $TMP_DIR
-
-ARG SYMENGINE_VERSION="v0.6.0"
-RUN export PATH=/opt/gcc9/bin:$PATH \
-    && export LD_LIBRARY_PATH=/opt/gcc9/lib64:/opt/gcc9/lib:$LD_LIBRARY_PATH \
-    && export CC=/opt/gcc9/bin/gcc \
-    && export CXX=/opt/gcc9/bin/g++ \
-    && echo $PATH \
-    && gcc --version \
-    && g++ --version \
-    && mkdir -p $TMP_DIR/build && cd $TMP_DIR/build \
-    && git clone \
-        -b $SYMENGINE_VERSION \
-        --depth=1 \
-        https://github.com/symengine/symengine.git \
-    && cd symengine \
-    && mkdir build \
-    && cd build \
-    && cmake \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DBUILD_SHARED_LIBS=OFF \
-        -DCMAKE_C_FLAGS="-fpic -fvisibility=hidden" \
-        -DCMAKE_CXX_FLAGS="-fpic -fvisibility=hidden" \
-        -DCMAKE_INSTALL_PREFIX=$BUILD_DIR \
-        -DBUILD_BENCHMARKS=OFF \
-        -DGMP_INCLUDE_DIR=$BUILD_DIR/include \
-        -DGMP_LIBRARY=$BUILD_DIR/lib/libgmp.a \
-        -DCMAKE_PREFIX_PATH=$BUILD_DIR \
-        -DWITH_LLVM=ON \
-        -DWITH_COTIRE=OFF \
-        -DWITH_SYMENGINE_THREAD_SAFE=OFF \
-        -DWITH_CPP14=ON \
-        .. \
-    && make -j$NPROCS \
-    && make test \
-    && make install \
-    && rm -rf $TMP_DIR
-
-ARG DUNE_COPASI_VERSION="allow_no_vtk_output"
-RUN export PATH=/opt/gcc9/bin:$PATH \
-    && export LD_LIBRARY_PATH=/opt/gcc9/lib64:/opt/gcc9/lib:$LD_LIBRARY_PATH \
-    && export CC=/opt/gcc9/bin/gcc \
-    && export CXX=/opt/gcc9/bin/g++ \
-    && echo $PATH \
-    && gcc --version \
-    && g++ --version \
-    && mkdir -p $TMP_DIR/build && cd $TMP_DIR/build \
-    && echo 'CMAKE_FLAGS=" -G '"'"'Unix Makefiles'"'"'"' > opts.txt \
-    && echo 'CMAKE_FLAGS+=" -DCMAKE_CXX_STANDARD=17 "' >> opts.txt \
-    && echo 'CMAKE_FLAGS+=" -DCMAKE_BUILD_TYPE=Release "' >> opts.txt \
-    && echo 'CMAKE_FLAGS+=" -DCMAKE_INSTALL_PREFIX='"$BUILD_DIR"' "' >> opts.txt \
-    && echo 'CMAKE_FLAGS+=" -DGMPXX_INCLUDE_DIR:PATH='"$BUILD_DIR"'/include "' >> opts.txt \
-    && echo 'CMAKE_FLAGS+=" -DGMPXX_LIB:FILEPATH='"$BUILD_DIR"'/lib/libgmpxx.a "' >> opts.txt \
-    && echo 'CMAKE_FLAGS+=" -DGMP_LIB:FILEPATH='"$BUILD_DIR"'/lib/libgmp.a "' >> opts.txt \
-    && echo 'CMAKE_FLAGS+=" -DCMAKE_PREFIX_PATH='"$BUILD_DIR"' "' >> opts.txt \
-    && echo 'CMAKE_FLAGS+=" -Dfmt_ROOT='"$BUILD_DIR"' "' >> opts.txt \
-    && echo 'CMAKE_FLAGS+=" -DDUNE_PYTHON_VIRTUALENV_SETUP=0 -DDUNE_PYTHON_ALLOW_GET_PIP=0 "' >> opts.txt \
-    && echo 'CMAKE_FLAGS+=" -DCMAKE_DISABLE_FIND_PACKAGE_QuadMath=TRUE -DBUILD_TESTING=OFF "' >> opts.txt \
-    && echo 'CMAKE_FLAGS+=" -DDUNE_USE_ONLY_STATIC_LIBS=ON -DF77=true"' >> opts.txt \
-    && echo 'CMAKE_FLAGS+=" -DDUNE_COPASI_SD_EXECUTABLE=ON"' >> opts.txt \
-    && echo 'CMAKE_FLAGS+=" -DDUNE_COPASI_MD_EXECUTABLE=ON"' >> opts.txt \
-    && echo 'CMAKE_FLAGS+=" -DCMAKE_CXX_FLAGS='"'"'-fvisibility=hidden -fpic -static-libstdc++'"'"' "' >> opts.txt \
-    && echo 'MAKE_FLAGS="-j4 VERBOSE=1"' >> opts.txt \
-    && export DUNE_OPTIONS_FILE="opts.txt" \
-    && export DUNECONTROL=./dune-common/bin/dunecontrol \
-    && git clone \
-        -b ${DUNE_COPASI_VERSION}  \
-        --depth 1 \
-        --recursive \
-        https://gitlab.dune-project.org/copasi/dune-copasi.git \
-    && bash dune-copasi/.ci/setup.sh \
-    && rm -rf dune-testtools \
-    && bash dune-copasi/.ci/build.sh \
-    && $DUNECONTROL make install \
-    && rm -rf $TMP_DIR
-
-ARG LIBSBML_VERSION="development"
-RUN export PATH=/opt/gcc9/bin:$PATH \
-    && export LD_LIBRARY_PATH=/opt/gcc9/lib64:/opt/gcc9/lib:$LD_LIBRARY_PATH \
-    && export CC=/opt/gcc9/bin/gcc \
-    && export CXX=/opt/gcc9/bin/g++ \
-    && echo $PATH \
-    && gcc --version \
-    && g++ --version \
-    && mkdir -p $TMP_DIR/build && cd $TMP_DIR/build \
-    && git clone \
-        -b $LIBSBML_VERSION \
-        --depth=1 \
-        https://github.com/sbmlteam/libsbml.git \
-    && cd libsbml \
-    && mkdir build \
-    && cd build \
-    && cmake \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DBUILD_SHARED_LIBS=OFF \
-        -DCMAKE_C_FLAGS="-fpic -fvisibility=hidden" \
-        -DCMAKE_CXX_FLAGS="-fpic -fvisibility=hidden" \
-        -DCMAKE_INSTALL_PREFIX=$BUILD_DIR \
-        -DENABLE_SPATIAL=ON \
-        -DWITH_CPP_NAMESPACE=ON \
-        -DLIBSBML_SKIP_SHARED_LIBRARY=ON \
-        -DWITH_BZIP2=OFF \
-        -DWITH_ZLIB=OFF \
-        -DWITH_SWIG=OFF \
-        -DWITH_LIBXML=OFF \
-        -DWITH_EXPAT=ON \
-        -DLIBEXPAT_INCLUDE_DIR=$BUILD_DIR/include \
-        -DLIBEXPAT_LIBRARY=$BUILD_DIR/lib64/libexpat.a \
-        .. \
-    && make -j$NPROCS \
-    && make install \
-    && rm -rf $TMP_DIR
 
 ARG OPENCV_VERSION="4.4.0"
 RUN mkdir -p $TMP_DIR/build && cd $TMP_DIR/build \
@@ -592,7 +418,182 @@ RUN export PATH=/opt/gcc9/bin:$PATH \
     && make install \
     && rm -rf $TMP_DIR
 
-FROM quay.io/pypa/manylinux1_x86_64:2020-08-12-ebd07dd
+ARG FMT_VERSION="7.0.3"
+RUN export PATH=/opt/gcc9/bin:$PATH \
+    && export LD_LIBRARY_PATH=/opt/gcc9/lib64:/opt/gcc9/lib:$LD_LIBRARY_PATH \
+    && export CC=/opt/gcc9/bin/gcc \
+    && export CXX=/opt/gcc9/bin/g++ \
+    && echo $PATH \
+    && gcc --version \
+    && g++ --version \
+    && mkdir -p $TMP_DIR/build && cd $TMP_DIR/build \
+    && git clone \
+        -b $FMT_VERSION \
+        --depth=1 \
+        https://github.com/fmtlib/fmt.git \
+    && cd fmt \
+    && mkdir build \
+    && cd build \
+    && cmake \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DCMAKE_C_FLAGS="-fpic -fvisibility=hidden" \
+        -DCMAKE_CXX_FLAGS="-fpic -fvisibility=hidden" \
+        -DCMAKE_INSTALL_PREFIX=$BUILD_DIR \
+        -DCMAKE_CXX_STANDARD=17 \
+        -DFMT_DOC=OFF \
+        .. \
+    && make -j$NPROCS \
+    && make test \
+    && make install \
+    && rm -rf $TMP_DIR
+
+ARG SPDLOG_VERSION="v1.8.0"
+RUN export PATH=/opt/gcc9/bin:$PATH \
+    && export LD_LIBRARY_PATH=/opt/gcc9/lib64:/opt/gcc9/lib:$LD_LIBRARY_PATH \
+    && export CC=/opt/gcc9/bin/gcc \
+    && export CXX=/opt/gcc9/bin/g++ \
+    && echo $PATH \
+    && gcc --version \
+    && g++ --version \
+    && mkdir -p $TMP_DIR/build && cd $TMP_DIR/build \
+    && git clone \
+        -b $SPDLOG_VERSION \
+        --depth=1 \
+        https://github.com/gabime/spdlog.git \
+    && cd spdlog \
+    && mkdir cmake-build \
+    && cd cmake-build \
+    && cmake \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DCMAKE_C_FLAGS="-fpic -fvisibility=hidden" \
+        -DCMAKE_CXX_FLAGS="-fpic -fvisibility=hidden" \
+        -DCMAKE_INSTALL_PREFIX=$BUILD_DIR \
+        -DSPDLOG_BUILD_TESTS=ON \
+        -DSPDLOG_BUILD_EXAMPLE=OFF \
+        -DSPDLOG_FMT_EXTERNAL=ON \
+        -DSPDLOG_NO_THREAD_ID=ON \
+        -DSPDLOG_NO_ATOMIC_LEVELS=ON \
+        -DCMAKE_PREFIX_PATH=$BUILD_DIR \
+        .. \
+    && make -j$NPROCS \
+    && make test \
+    && make install \
+    && rm -rf $TMP_DIR
+
+ARG SYMENGINE_VERSION="v0.6.0"
+RUN export PATH=/opt/gcc9/bin:$PATH \
+    && export LD_LIBRARY_PATH=/opt/gcc9/lib64:/opt/gcc9/lib:$LD_LIBRARY_PATH \
+    && export CC=/opt/gcc9/bin/gcc \
+    && export CXX=/opt/gcc9/bin/g++ \
+    && echo $PATH \
+    && gcc --version \
+    && g++ --version \
+    && mkdir -p $TMP_DIR/build && cd $TMP_DIR/build \
+    && git clone \
+        -b $SYMENGINE_VERSION \
+        --depth=1 \
+        https://github.com/symengine/symengine.git \
+    && cd symengine \
+    && mkdir build \
+    && cd build \
+    && cmake \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DCMAKE_C_FLAGS="-fpic -fvisibility=hidden" \
+        -DCMAKE_CXX_FLAGS="-fpic -fvisibility=hidden" \
+        -DCMAKE_INSTALL_PREFIX=$BUILD_DIR \
+        -DBUILD_BENCHMARKS=OFF \
+        -DGMP_INCLUDE_DIR=$BUILD_DIR/include \
+        -DGMP_LIBRARY=$BUILD_DIR/lib/libgmp.a \
+        -DCMAKE_PREFIX_PATH=$BUILD_DIR \
+        -DWITH_LLVM=ON \
+        -DWITH_COTIRE=OFF \
+        -DWITH_SYMENGINE_THREAD_SAFE=OFF \
+        -DWITH_CPP14=ON \
+        .. \
+    && make -j$NPROCS \
+    && make test \
+    && make install \
+    && rm -rf $TMP_DIR
+
+ARG DUNE_COPASI_VERSION="26-add-simple-adaptive-timestepping"
+RUN export PATH=/opt/gcc9/bin:$PATH \
+    && export LD_LIBRARY_PATH=/opt/gcc9/lib64:/opt/gcc9/lib:$LD_LIBRARY_PATH \
+    && export CC=/opt/gcc9/bin/gcc \
+    && export CXX=/opt/gcc9/bin/g++ \
+    && echo $PATH \
+    && gcc --version \
+    && g++ --version \
+    && mkdir -p $TMP_DIR/build && cd $TMP_DIR/build \
+    && echo 'CMAKE_FLAGS=" -G '"'"'Unix Makefiles'"'"'"' > opts.txt \
+    && echo 'CMAKE_FLAGS+=" -DCMAKE_CXX_STANDARD=17 "' >> opts.txt \
+    && echo 'CMAKE_FLAGS+=" -DCMAKE_BUILD_TYPE=Release "' >> opts.txt \
+    && echo 'CMAKE_FLAGS+=" -DCMAKE_INSTALL_PREFIX='"$BUILD_DIR"' "' >> opts.txt \
+    && echo 'CMAKE_FLAGS+=" -DGMPXX_INCLUDE_DIR:PATH='"$BUILD_DIR"'/include "' >> opts.txt \
+    && echo 'CMAKE_FLAGS+=" -DGMPXX_LIB:FILEPATH='"$BUILD_DIR"'/lib/libgmpxx.a "' >> opts.txt \
+    && echo 'CMAKE_FLAGS+=" -DGMP_LIB:FILEPATH='"$BUILD_DIR"'/lib/libgmp.a "' >> opts.txt \
+    && echo 'CMAKE_FLAGS+=" -DCMAKE_PREFIX_PATH='"$BUILD_DIR"' "' >> opts.txt \
+    && echo 'CMAKE_FLAGS+=" -Dfmt_ROOT='"$BUILD_DIR"' "' >> opts.txt \
+    && echo 'CMAKE_FLAGS+=" -DDUNE_PYTHON_VIRTUALENV_SETUP=0 -DDUNE_PYTHON_ALLOW_GET_PIP=0 "' >> opts.txt \
+    && echo 'CMAKE_FLAGS+=" -DCMAKE_DISABLE_FIND_PACKAGE_QuadMath=TRUE -DBUILD_TESTING=OFF "' >> opts.txt \
+    && echo 'CMAKE_FLAGS+=" -DDUNE_USE_ONLY_STATIC_LIBS=ON -DF77=true"' >> opts.txt \
+    && echo 'CMAKE_FLAGS+=" -DDUNE_COPASI_SD_EXECUTABLE=ON"' >> opts.txt \
+    && echo 'CMAKE_FLAGS+=" -DDUNE_COPASI_MD_EXECUTABLE=ON"' >> opts.txt \
+    && echo 'CMAKE_FLAGS+=" -DCMAKE_CXX_FLAGS='"'"'-fvisibility=hidden -fpic -static-libstdc++'"'"' "' >> opts.txt \
+    && echo 'MAKE_FLAGS="-j24 VERBOSE=1"' >> opts.txt \
+    && export DUNE_OPTIONS_FILE="opts.txt" \
+    && export DUNECONTROL=./dune-common/bin/dunecontrol \
+    && git clone \
+        -b ${DUNE_COPASI_VERSION}  \
+        --depth 1 \
+        --recursive \
+        https://gitlab.dune-project.org/copasi/dune-copasi.git \
+    && bash dune-copasi/.ci/setup.sh \
+    && rm -rf dune-testtools \
+    && bash dune-copasi/.ci/build.sh \
+    && $DUNECONTROL make install \
+    && rm -rf $TMP_DIR
+
+ARG LIBSBML_VERSION="development"
+RUN export PATH=/opt/gcc9/bin:$PATH \
+    && export LD_LIBRARY_PATH=/opt/gcc9/lib64:/opt/gcc9/lib:$LD_LIBRARY_PATH \
+    && export CC=/opt/gcc9/bin/gcc \
+    && export CXX=/opt/gcc9/bin/g++ \
+    && echo $PATH \
+    && gcc --version \
+    && g++ --version \
+    && mkdir -p $TMP_DIR/build && cd $TMP_DIR/build \
+    && git clone \
+        -b $LIBSBML_VERSION \
+        --depth=1 \
+        https://github.com/sbmlteam/libsbml.git \
+    && cd libsbml \
+    && mkdir build \
+    && cd build \
+    && cmake \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DCMAKE_C_FLAGS="-fpic -fvisibility=hidden" \
+        -DCMAKE_CXX_FLAGS="-fpic -fvisibility=hidden" \
+        -DCMAKE_INSTALL_PREFIX=$BUILD_DIR \
+        -DENABLE_SPATIAL=ON \
+        -DWITH_CPP_NAMESPACE=ON \
+        -DLIBSBML_SKIP_SHARED_LIBRARY=ON \
+        -DWITH_BZIP2=OFF \
+        -DWITH_ZLIB=OFF \
+        -DWITH_SWIG=OFF \
+        -DWITH_LIBXML=OFF \
+        -DWITH_EXPAT=ON \
+        -DLIBEXPAT_INCLUDE_DIR=$BUILD_DIR/include \
+        -DLIBEXPAT_LIBRARY=$BUILD_DIR/lib64/libexpat.a \
+        .. \
+    && make -j$NPROCS \
+    && make install \
+    && rm -rf $TMP_DIR
+
+FROM quay.io/pypa/manylinux1_x86_64:2020-08-20-a535ba4
 MAINTAINER Liam Keegan "liam@keegan.ch"
 
 ARG BUILD_DIR=/opt/smelibs

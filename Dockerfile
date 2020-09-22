@@ -1,6 +1,6 @@
 # manylinux1-based image for compiling Spatial Model Editor python wheels
 
-FROM quay.io/pypa/manylinux1_x86_64:2020-08-20-a535ba4 as builder
+FROM quay.io/pypa/manylinux1_x86_64:2020-09-20-4ab91ab as builder
 MAINTAINER Liam Keegan "liam@keegan.ch"
 
 ARG NPROCS=24
@@ -482,7 +482,7 @@ RUN export PATH=/opt/gcc9/bin:$PATH \
     && make install \
     && rm -rf $TMP_DIR
 
-ARG SYMENGINE_VERSION="v0.6.0"
+ARG SYMENGINE_VERSION="master"
 RUN export PATH=/opt/gcc9/bin:$PATH \
     && export LD_LIBRARY_PATH=/opt/gcc9/lib64:/opt/gcc9/lib:$LD_LIBRARY_PATH \
     && export CC=/opt/gcc9/bin/gcc \
@@ -511,7 +511,6 @@ RUN export PATH=/opt/gcc9/bin:$PATH \
         -DWITH_LLVM=ON \
         -DWITH_COTIRE=OFF \
         -DWITH_SYMENGINE_THREAD_SAFE=OFF \
-        -DWITH_CPP14=ON \
         .. \
     && make -j$NPROCS \
     && make test \
@@ -593,7 +592,7 @@ RUN export PATH=/opt/gcc9/bin:$PATH \
     && make install \
     && rm -rf $TMP_DIR
 
-FROM quay.io/pypa/manylinux1_x86_64:2020-08-20-a535ba4
+FROM quay.io/pypa/manylinux1_x86_64:2020-09-20-4ab91ab
 MAINTAINER Liam Keegan "liam@keegan.ch"
 
 ARG BUILD_DIR=/opt/smelibs
@@ -607,9 +606,6 @@ ENV LD_LIBRARY_PATH=/opt/gcc9/lib64:/opt/gcc9/lib:$LD_LIBRARY_PATH
 
 # SME static libs
 COPY --from=builder $BUILD_DIR $BUILD_DIR
-
-# Remove Python 3.9 - still in beta
-RUN rm -rf /opt/python/cp39-cp39
 
 # Install cmake and ccache
 RUN /opt/python/cp38-cp38/bin/pip install \

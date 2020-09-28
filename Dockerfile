@@ -1,6 +1,6 @@
 # manylinux1-based image for compiling Spatial Model Editor python wheels
 
-FROM quay.io/pypa/manylinux1_x86_64:2020-09-20-4ab91ab as builder
+FROM quay.io/pypa/manylinux1_x86_64:2020-09-26-9f151ab as builder
 MAINTAINER Liam Keegan "liam@keegan.ch"
 
 ARG NPROCS=24
@@ -233,7 +233,7 @@ RUN export PATH=/opt/gcc9/bin:$PATH \
     && make install \
     && rm -rf $TMP_DIR
 
-ARG QT5_VERSION="v5.15.0"
+ARG QT5_VERSION="v5.15.1"
 RUN mkdir -p $TMP_DIR && cd $TMP_DIR \
     && git clone \
         https://code.qt.io/qt/qt5.git \
@@ -517,7 +517,7 @@ RUN export PATH=/opt/gcc9/bin:$PATH \
     && make install \
     && rm -rf $TMP_DIR
 
-ARG DUNE_COPASI_VERSION="26-add-simple-adaptive-timestepping"
+ARG DUNE_COPASI_VERSION="master"
 RUN export PATH=/opt/gcc9/bin:$PATH \
     && export LD_LIBRARY_PATH=/opt/gcc9/lib64:/opt/gcc9/lib:$LD_LIBRARY_PATH \
     && export CC=/opt/gcc9/bin/gcc \
@@ -592,7 +592,7 @@ RUN export PATH=/opt/gcc9/bin:$PATH \
     && make install \
     && rm -rf $TMP_DIR
 
-FROM quay.io/pypa/manylinux1_x86_64:2020-09-20-4ab91ab
+FROM quay.io/pypa/manylinux1_x86_64:2020-09-26-9f151ab
 MAINTAINER Liam Keegan "liam@keegan.ch"
 
 ARG BUILD_DIR=/opt/smelibs

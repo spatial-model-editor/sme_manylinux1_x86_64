@@ -4,11 +4,11 @@ Docker container for compiling linux python wheels for [sme](https://pypi.org/pr
 
 - Available from <https://hub.docker.com/repository/docker/lkeegan/sme_manylinux1_x86_64>
 
-- Used by <https://github.com/lkeegan/spatial-model-editor/blob/master/.travis.yml>
+- Used by <https://github.com/spatial-model-editor/spatial-model-editor/blob/master/.travis.yml>
 
 - Based on <https://quay.io/repository/pypa/manylinux1_x86_64>
 
-- Also includes a more modern compiler (gcc 9.2.0)
+- Also includes a more modern compiler (gcc 9.3.0)
 
 To update:
 

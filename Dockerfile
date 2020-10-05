@@ -1,6 +1,6 @@
 # manylinux1-based image for compiling Spatial Model Editor python wheels
 
-FROM quay.io/pypa/manylinux1_x86_64:2020-09-26-9f151ab as builder
+FROM quay.io/pypa/manylinux1_x86_64:2020-10-01-f141056 as builder
 MAINTAINER Liam Keegan "liam@keegan.ch"
 
 ARG NPROCS=24
@@ -12,7 +12,7 @@ RUN yum install -q -y \
     subversion \
     wget
 
-RUN git clone -b releases/gcc-9.2.0 --depth=1 https://github.com/gcc-mirror/gcc.git \
+RUN git clone -b releases/gcc-9.3.0 --depth=1 https://github.com/gcc-mirror/gcc.git \
     && cd gcc \
     && ./contrib/download_prerequisites
 
@@ -60,7 +60,7 @@ RUN export PATH=/opt/gcc9/bin:$PATH \
     && make install \
     && rm -rf $TMP_DIR
 
-ARG LIBEXPAT_VERSION="R_2_2_9"
+ARG LIBEXPAT_VERSION="R_2_2_10"
 RUN export PATH=/opt/gcc9/bin:$PATH \
     && export LD_LIBRARY_PATH=/opt/gcc9/lib64:/opt/gcc9/lib:$LD_LIBRARY_PATH \
     && export CC=/opt/gcc9/bin/gcc \
@@ -448,7 +448,7 @@ RUN export PATH=/opt/gcc9/bin:$PATH \
     && make install \
     && rm -rf $TMP_DIR
 
-ARG SPDLOG_VERSION="v1.8.0"
+ARG SPDLOG_VERSION="v1.8.1"
 RUN export PATH=/opt/gcc9/bin:$PATH \
     && export LD_LIBRARY_PATH=/opt/gcc9/lib64:/opt/gcc9/lib:$LD_LIBRARY_PATH \
     && export CC=/opt/gcc9/bin/gcc \
@@ -592,7 +592,7 @@ RUN export PATH=/opt/gcc9/bin:$PATH \
     && make install \
     && rm -rf $TMP_DIR
 
-FROM quay.io/pypa/manylinux1_x86_64:2020-09-26-9f151ab
+FROM quay.io/pypa/manylinux1_x86_64:2020-10-01-f141056
 MAINTAINER Liam Keegan "liam@keegan.ch"
 
 ARG BUILD_DIR=/opt/smelibs

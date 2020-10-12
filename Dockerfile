@@ -130,7 +130,17 @@ RUN export PATH=/opt/gcc9/bin:$PATH \
     && make install \
     && rm -rf $TMP_DIR
 
-ARG LLVM_VERSION="10.0.1"
+ARG LLVM_VERSION="11.0.0"
+RUN mkdir -p $TMP_DIR && cd $TMP_DIR \
+    && git clone \
+        -b llvmorg-$LLVM_VERSION \
+        --depth=1 \
+        https://github.com/llvm/llvm-project.git
+
+# patch for "‘CPU_COUNT’ was not declared in this scope" compilation error
+RUN sed -i "s/CPU_COUNT(\&Enabled)/1/g" $TMP_DIR/llvm-project/llvm/lib/Support/Host.cpp \
+    && sed -i "s/CPU_COUNT(\&Set)/1/g" $TMP_DIR/llvm-project/llvm/lib/Support/Unix/Threading.inc
+
 RUN export PATH=/opt/gcc9/bin:$PATH \
     && export LD_LIBRARY_PATH=/opt/gcc9/lib64:/opt/gcc9/lib:$LD_LIBRARY_PATH \
     && export CC=/opt/gcc9/bin/gcc \
@@ -138,18 +148,13 @@ RUN export PATH=/opt/gcc9/bin:$PATH \
     && echo $PATH \
     && gcc --version \
     && g++ --version \
-    && mkdir -p $TMP_DIR && cd $TMP_DIR \
-    && git clone \
-        -b llvmorg-$LLVM_VERSION \
-        --depth=1 \
-        https://github.com/llvm/llvm-project.git \
-    && cd llvm-project/llvm \
+    && cd $TMP_DIR/llvm-project/llvm \
     && mkdir build \
     && cd build \
     && cmake \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=$BUILD_DIR \
-        -DPYTHON_EXECUTABLE:FILEPATH=/opt/python/cp38-cp38/bin/python \
+        -DPython3_EXECUTABLE:FILEPATH=/opt/python/cp38-cp38/bin/python \
         -DLLVM_DEFAULT_TARGET_TRIPLE=x86_64-unknown-linux-gnu \
         -DLLVM_TARGETS_TO_BUILD="X86" \
         -DLLVM_BUILD_TOOLS=OFF \
